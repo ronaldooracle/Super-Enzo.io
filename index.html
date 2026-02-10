@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Mario Game - Festa do Aniversário!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(180deg, #5c94fc 0%, #5c94fc 70%, #8b5c28 70%, #8b5c28 100%);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #gameCanvas {
+            border: 8px solid #000;
+            box-shadow: 0 0 0 4px #fff, 0 0 0 8px #000, 0 20px 40px rgba(0,0,0,0.5);
+            background: #5c94fc;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        #gameOver {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .game-over-content {
+            text-align: center;
+            color: #fff;
+            max-width: 90%;
+            animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        #playerPhoto {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 8px solid #FFD700;
+            margin: 0 auto 30px;
+            box-shadow: 
+                0 0 0 4px #ff0000,
+                0 0 20px rgba(255, 215, 0, 0.8),
+                0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: pulse 2s infinite;
+            object-fit: cover;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        h1 {
+            font-size: clamp(20px, 4vw, 40px);
+            color: #ff0000;
+            text-shadow: 
+                4px 4px 0 #000,
+                -2px -2px 0 #fff;
+            margin-bottom: 20px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.7; }
+        }
+
+        .message {
+            font-size: clamp(14px, 2.5vw, 20px);
+            color: #FFD700;
+            text-shadow: 3px 3px 0 #000;
+            margin: 20px 0;
+            line-height: 1.8;
+        }
+
+        .present-emoji {
+            font-size: 60px;
+            display: inline-block;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        #restartBtn {
+            background: linear-gradient(180deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: 4px solid #000;
+            padding: 15px 40px;
+            font-size: clamp(12px, 2vw, 18px);
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            margin-top: 30px;
+            box-shadow: 0 8px 0 #2d6b2f, 0 10px 20px rgba(0,0,0,0.3);
+            transition: all 0.1s;
+        }
+
+        #restartBtn:hover {
+            background: linear-gradient(180deg, #5cbf60 0%, #4eb852 100%);
+            transform: translateY(2px);
+            box-shadow: 0 6px 0 #2d6b2f, 0 8px 15px rgba(0,0,0,0.3);
+        }
+
+        #restartBtn:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #2d6b2f, 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        #score {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: clamp(14px, 2vw, 20px);
+            text-shadow: 3px 3px 0 #000;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 3px solid #FFD700;
+        }
+
+        .cloud {
+            position: fixed;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            from { left: -200px; }
+            to { left: 110%; }
+        }
+
+        #intro {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            animation: fadeOut 1s ease-out 3s forwards;
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; pointer-events: none; }
+        }
+
+        .intro-content {
+            text-align: center;
+            animation: zoomIn 2s ease-out;
+        }
+
+        @keyframes zoomIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .intro-title {
+            font-size: clamp(40px, 10vw, 80px);
+            color: #ff0000;
+            text-shadow: 
+                6px 6px 0 #000,
+                -3px -3px 0 #fff,
+                0 0 20px #FFD700;
+            margin-bottom: 20px;
+            animation: blink 0.5s infinite;
+        }
+
+        .intro-subtitle {
+            font-size: clamp(20px, 5vw, 40px);
+            color: #FFD700;
+            text-shadow: 4px 4px 0 #000;
+        }
+
+        @media (max-width: 768px) {
+            #playerPhoto {
+                width: 150px;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Intro Screen -->
+    <div id="intro">
+        <div class="intro-content">
+            <div class="intro-title">🍄 SUPER ENZO 🍄</div>
+            <div class="intro-subtitle">AVENTURA DO ANIVERSÁRIO</div>
+        </div>
+    </div>
+
+    <!-- Clouds for decoration -->
+    <div class="cloud" style="width: 100px; height: 60px; top: 10%; animation-duration: 25s;"></div>
+    <div class="cloud" style="width: 80px; height: 50px; top: 20%; animation-duration: 30s; animation-delay: -10s;"></div>
+    <div class="cloud" style="width: 120px; height: 70px; top: 15%; animation-duration: 35s; animation-delay: -20s;"></div>
+
+    <div id="score">CANOS: <span id="scoreValue">0</span>/5</div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="gameOver">
+        <div class="game-over-content">
+            <img id="playerPhoto" src="/mnt/user-data/uploads/WhatsApp_Image_2026-02-09_at_13_36_50.jpeg" alt="Super Enzo">
+            <h1>🏁 FIM DE JOGO! 🏁</h1>
+            <div class="message">
+                <p>JOGOU BEM!</p>
+                <div class="present-emoji">🎁</div>
+                <p>AGORA VAI TER QUE</p>
+                <p>TRAZER PRESENTE</p>
+                <p>PARA MINHA FESTA!</p>
+                <div class="present-emoji">🎁</div>
+            </div>
+            <button id="restartBtn" onclick="restartGame()">JOGAR DE NOVO</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        const setCanvasSize = () => {
+            const size = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.8, 800);
+            canvas.width = size;
+            canvas.height = size;
+        };
+        setCanvasSize();
+        window.addEventListener('resize', setCanvasSize);
+
+        // Game variables
+        let gameRunning = true;
+        let pipesPassed = 0;
+        let gameSpeed = 2.5;
+        let frameCount = 0;
+        let showFlag = false;
+        let flagX = 0;
+
+        // Mario player
+        const player = {
+            x: 50,
+            y: canvas.height - 150,
+            width: 50,
+            height: 50,
+            velocityY: 0,
+            jumping: false,
+            gravity: 0.6,
+            jumpPower: -18,
+            color: '#ff0000'
+        };
+
+        // Obstacles
+        let obstacles = [];
+        const obstacleWidth = 40;
+        const obstacleHeight = 45;
+        let obstaclesCreated = 0;
+
+        // Coins
+        let coins = [];
+
+        // Create obstacle
+        function createObstacle() {
+            if (obstaclesCreated < 5) {
+                obstacles.push({
+                    x: canvas.width,
+                    y: canvas.height - 150,
+                    width: obstacleWidth,
+                    height: obstacleHeight,
+                    passed: false
+                });
+                obstaclesCreated++;
+            }
+        }
+
+        // Create coin
+        function createCoin() {
+            if (pipesPassed < 5) {
+                coins.push({
+                    x: canvas.width,
+                    y: canvas.height - 250 - Math.random() * 100,
+                    size: 20,
+                    collected: false,
+                    rotation: 0
+                });
+            }
+        }
+
+        // Create flag
+        function createFlag() {
+            flagX = canvas.width;
+            showFlag = true;
+        }
+
+        // Draw Mario-style player
+        function drawPlayer() {
+            // Body (red shirt)
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(player.x, player.y + 20, player.width, 25);
+            
+            // Head
+            ctx.fillStyle = '#ffdbac';
+            ctx.fillRect(player.x + 10, player.y, 30, 25);
+            
+            // Hat
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(player.x + 5, player.y - 10, 40, 15);
+            
+            // Hat logo (E for Enzo)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(player.x + 17, player.y - 5, 16, 10);
+            ctx.fillStyle = '#ff0000';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('E', player.x + 21, player.y + 3);
+            
+            // Overalls
+            ctx.fillStyle = '#0000ff';
+            ctx.fillRect(player.x + 5, player.y + 30, 40, 15);
+            
+            // Legs
+            ctx.fillStyle = '#0000ff';
+            ctx.fillRect(player.x + 10, player.y + 45, 15, 15);
+            ctx.fillRect(player.x + 25, player.y + 45, 15, 15);
+            
+            // Shoes
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(player.x + 8, player.y + 55, 18, 8);
+            ctx.fillRect(player.x + 24, player.y + 55, 18, 8);
+
+            // Name tag "ENZO BRAVO" above player
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 10px Press Start 2P';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.strokeText('ENZO', player.x - 5, player.y - 25);
+            ctx.fillText('ENZO', player.x - 5, player.y - 25);
+            ctx.strokeText('BRAVO', player.x - 10, player.y - 15);
+            ctx.fillText('BRAVO', player.x - 10, player.y - 15);
+        }
+
+        // Draw pipe obstacle
+        function drawObstacle(obs) {
+            // Pipe body
+            ctx.fillStyle = '#00aa00';
+            ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+            
+            // Pipe rim
+            ctx.fillStyle = '#00cc00';
+            ctx.fillRect(obs.x - 5, obs.y, obs.width + 10, 10);
+            
+            // Pipe details
+            ctx.strokeStyle = '#008800';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(obs.x + 5, obs.y + 10, obs.width - 10, obs.height - 10);
+        }
+
+        // Draw flag
+        function drawFlag() {
+            if (!showFlag) return;
+
+            const flagPoleX = flagX;
+            const flagPoleY = canvas.height - 150;
+            const poleHeight = 200;
+            const poleWidth = 8;
+
+            // Flag pole (black and white stripes)
+            ctx.fillStyle = '#000';
+            ctx.fillRect(flagPoleX, flagPoleY - poleHeight, poleWidth, poleHeight);
+            
+            // White stripes
+            ctx.fillStyle = '#fff';
+            for (let i = 0; i < poleHeight; i += 20) {
+                if (Math.floor(i / 20) % 2 === 0) {
+                    ctx.fillRect(flagPoleX, flagPoleY - poleHeight + i, poleWidth, 10);
+                }
+            }
+
+            // Flag (waving effect)
+            const flagWidth = 60;
+            const flagHeight = 40;
+            const wave = Math.sin(frameCount * 0.1) * 3;
+
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.moveTo(flagPoleX + poleWidth, flagPoleY - poleHeight);
+            ctx.lineTo(flagPoleX + poleWidth + flagWidth + wave, flagPoleY - poleHeight + 10);
+            ctx.lineTo(flagPoleX + poleWidth + flagWidth + wave, flagPoleY - poleHeight + flagHeight - 10);
+            ctx.lineTo(flagPoleX + poleWidth, flagPoleY - poleHeight + flagHeight);
+            ctx.closePath();
+            ctx.fill();
+
+            // Flag text
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Press Start 2P';
+            ctx.fillText('FIM', flagPoleX + poleWidth + 15, flagPoleY - poleHeight + 25);
+
+            // Pole base
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(flagPoleX - 5, flagPoleY, poleWidth + 10, 10);
+        }
+
+        // Draw coin
+        function drawCoin(coin) {
+            ctx.save();
+            ctx.translate(coin.x + coin.size / 2, coin.y + coin.size / 2);
+            ctx.rotate(coin.rotation);
+            
+            // Gold coin
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(0, 0, coin.size / 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Inner circle
+            ctx.fillStyle = '#FFA500';
+            ctx.beginPath();
+            ctx.arc(0, 0, coin.size / 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+            coin.rotation += 0.1;
+        }
+
+        // Draw ground
+        function drawGround() {
+            const groundY = canvas.height - 100;
+            
+            // Ground blocks
+            ctx.fillStyle = '#8b5c28';
+            ctx.fillRect(0, groundY, canvas.width, 100);
+            
+            // Block pattern
+            const blockSize = 40;
+            for (let x = 0; x < canvas.width; x += blockSize) {
+                ctx.strokeStyle = '#654321';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, groundY, blockSize, blockSize);
+                ctx.strokeRect(x, groundY + blockSize, blockSize, blockSize);
+            }
+        }
+
+        // Draw sky and clouds
+        function drawBackground() {
+            // Sky
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#5c94fc');
+            gradient.addColorStop(0.7, '#87ceeb');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height - 100);
+            
+            // Simple cloud
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            const cloudX = (frameCount * 0.5) % (canvas.width + 200) - 100;
+            ctx.beginPath();
+            ctx.arc(cloudX, 80, 30, 0, Math.PI * 2);
+            ctx.arc(cloudX + 25, 80, 35, 0, Math.PI * 2);
+            ctx.arc(cloudX + 50, 80, 30, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Jump
+        function jump() {
+            if (!player.jumping && gameRunning) {
+                player.velocityY = player.jumpPower;
+                player.jumping = true;
+            }
+        }
+
+        // Update game
+        function update() {
+            if (!gameRunning) return;
+
+            frameCount++;
+
+            // Apply gravity
+            player.velocityY += player.gravity;
+            player.y += player.velocityY;
+
+            // Ground collision
+            const groundY = canvas.height - 150;
+            if (player.y >= groundY) {
+                player.y = groundY;
+                player.velocityY = 0;
+                player.jumping = false;
+            }
+
+            // Update obstacles
+            obstacles.forEach((obs, index) => {
+                obs.x -= gameSpeed;
+
+                // Count passed pipes
+                if (!obs.passed && obs.x + obs.width < player.x) {
+                    obs.passed = true;
+                    pipesPassed++;
+                    document.getElementById('scoreValue').textContent = pipesPassed;
+                    
+                    // After 5 pipes, show flag
+                    if (pipesPassed === 5) {
+                        createFlag();
+                    }
+                }
+
+                // Collision detection
+                if (
+                    player.x < obs.x + obs.width &&
+                    player.x + player.width > obs.x &&
+                    player.y < obs.y + obs.height &&
+                    player.y + player.height > obs.y
+                ) {
+                    gameOver();
+                }
+
+                // Remove off-screen obstacles
+                if (obs.x + obs.width < 0) {
+                    obstacles.splice(index, 1);
+                }
+            });
+
+            // Update flag
+            if (showFlag) {
+                flagX -= gameSpeed;
+
+                // Check if player reached the flag
+                if (player.x + player.width >= flagX && player.x <= flagX + 8) {
+                    gameOver();
+                }
+            }
+
+            // Update coins
+            coins.forEach((coin, index) => {
+                coin.x -= gameSpeed;
+
+                // Collect coin
+                if (
+                    !coin.collected &&
+                    player.x < coin.x + coin.size &&
+                    player.x + player.width > coin.x &&
+                    player.y < coin.y + coin.size &&
+                    player.y + player.height > coin.y
+                ) {
+                    coin.collected = true;
+                }
+
+                // Remove collected or off-screen coins
+                if (coin.collected || coin.x + coin.size < 0) {
+                    coins.splice(index, 1);
+                }
+            });
+
+            // Create new obstacles (only first 5)
+            if (frameCount % 150 === 0 && obstaclesCreated < 5) {
+                createObstacle();
+            }
+
+            // Create new coins
+            if (frameCount % 180 === 0 && pipesPassed < 5) {
+                createCoin();
+            }
+        }
+
+        // Draw game
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawBackground();
+            drawGround();
+            drawPlayer();
+            drawFlag();
+            
+            obstacles.forEach(drawObstacle);
+            coins.forEach(coin => {
+                if (!coin.collected) drawCoin(coin);
+            });
+        }
+
+        // Game loop
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Game over
+        function gameOver() {
+            gameRunning = false;
+            document.getElementById('gameOver').style.display = 'flex';
+        }
+
+        // Restart game
+        function restartGame() {
+            gameRunning = true;
+            pipesPassed = 0;
+            gameSpeed = 2.5;
+            frameCount = 0;
+            obstaclesCreated = 0;
+            obstacles = [];
+            coins = [];
+            showFlag = false;
+            flagX = 0;
+            player.y = canvas.height - 150;
+            player.velocityY = 0;
+            player.jumping = false;
+            document.getElementById('scoreValue').textContent = pipesPassed;
+            document.getElementById('gameOver').style.display = 'none';
+        }
+
+        // Controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                e.preventDefault();
+                jump();
+            }
+        });
+
+        canvas.addEventListener('click', jump);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            jump();
+        });
+
+        // Start game
+        gameLoop();
+    </script>
+</body>
+</html>
